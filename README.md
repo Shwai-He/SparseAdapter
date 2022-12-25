@@ -18,17 +18,17 @@ Adapter Tuning, which freezes the pretrained language models (PLMs) and only fin
 To install requirements, run `pip install -r requirements.txt`.
 
 ## Usage
-To fine-tune the SparseAdapter model, run: \
+To fine-tune the SparseAdapter model, run: 
 
 `examples/pytorch/text-classification/run_glue_sparse.py`, \
 `examples/pytorch/summarization/run_summarization_sparse.py`. \
-`examples/pytorch/question-answering/run_qa_sparse.py`, \
+`examples/pytorch/question-answering/run_qa_sparse.py`, 
 
-You can also run the following scripts: \
+You can also run the following scripts: 
 
 `examples/pytorch/text-classification/run_glue.sh`, \
 `examples/pytorch/summarization/run_summarization.sh`. \
-`examples/pytorch/question-answering/run_qa.sh`, \
+`examples/pytorch/question-answering/run_qa.sh`, 
 
 ## Citation
 
