@@ -22,7 +22,7 @@ To fine-tune the SparseAdapter model, run: \
 
 `examples/pytorch/text-classification/run_glue_sparse.py`, \
 `examples/pytorch/summarization/run_summarization_sparse.py`. \
-`examples/pytorch/question-answering/run_qa.py`, \
+`examples/pytorch/question-answering/run_qa_sparse.py`, \
 
 You can also run the following scripts: \
 
