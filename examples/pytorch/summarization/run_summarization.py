@@ -22,13 +22,8 @@ import logging
 import os
 import sys
 
-sys.path = ['/workspace/hs/unify-parameter-efficient-tuning-master',
-'/workspace/hs/unify-parameter-efficient-tuning-master',
-'/workspace/hs/unify-parameter-efficient-tuning-master/src', '/root/.pycharm_helpers/pycharm_display',
-'/opt/conda/lib/python38.zip',
-'/opt/conda/lib/python3.8',
-'/opt/conda/lib/python3.8/lib-dynload',
-'/opt/conda/lib/python3.8/site-packages', '/root/.pycharm_helpers/pycharm_matplotlib_backend']
+# todo add the local path of transformers in sys.path
+# sys.path = []
 
 from dataclasses import dataclass, field
 from typing import Optional

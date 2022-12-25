@@ -21,7 +21,8 @@ import os
 import random
 import sys
 
-sys.path += ['/user/sunsiqi/hs/SparseAdapter', '/user/sunsiqi/hs/SparseAdapter/src']
+# todo add the local path of transformers in sys.path
+# sys.path = []
 
 from dataclasses import dataclass, field
 from typing import Optional
