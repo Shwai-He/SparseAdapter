@@ -35,11 +35,7 @@ You can also run the following scripts:
 ```
 @inproceedings{he2022sparseadapter,
     title = "SparseAdapter: An Easy Approach for Improving the Parameter-Efficiency of Adapters",
-    author = "He, Shwai  and
-      Ding, Liang  and
-      Dong, Daize  and
-      Zhang, Miao  and
-      Tao, Dacheng",
+    author = {He, Shwai and Ding, Liang and Dong, Daize and Zhang, Miao and Tao, Dacheng},
     booktitle = "Findings of EMNLP",
     year = "2022",
     url = "https://aclanthology.org/2022.findings-emnlp.160",
