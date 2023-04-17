@@ -33,15 +33,16 @@ You can also run the following scripts:
 ## Citation
 
 ```
-@misc{https://doi.org/10.48550/arxiv.2210.04284,
-  doi = {10.48550/ARXIV.2210.04284},
-  url = {https://arxiv.org/abs/2210.04284},
-  author = {He, Shwai and Ding, Liang and Dong, Daize and Zhang, Miao and Tao, Dacheng},
-  keywords = {Computation and Language (cs.CL), FOS: Computer and information sciences, FOS: Computer and information sciences},
-  title = {SparseAdapter: An Easy Approach for Improving the Parameter-Efficiency of Adapters},
-  publisher = {arXiv},
-  year = {2022},
-  copyright = {Creative Commons Attribution 4.0 International}
+@inproceedings{he2022sparseadapter,
+    title = "SparseAdapter: An Easy Approach for Improving the Parameter-Efficiency of Adapters",
+    author = "He, Shwai  and
+      Ding, Liang  and
+      Dong, Daize  and
+      Zhang, Miao  and
+      Tao, Dacheng",
+    booktitle = "Findings of EMNLP",
+    year = "2022",
+    url = "https://aclanthology.org/2022.findings-emnlp.160",
 }
 ```
 

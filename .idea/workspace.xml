@@ -4,7 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="3bc0cb99-659d-4909-9954-7a791d56dc66" name="Changes" comment="" />
+    <list default="true" id="3bc0cb99-659d-4909-9954-7a791d56dc66" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -53,7 +55,7 @@
     <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
     <property name="WebServerToolWindowFactoryState" value="true" />
     <property name="credentialsType com.jetbrains.python.remote.PyCreateRemoteInterpreterDialog$PyCreateRemoteSdkForm" value="Web Deployment" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/../Exploration/LLAMA" />
     <property name="node.js.detected.package.eslint" value="true" />
     <property name="node.js.detected.package.tslint" value="true" />
     <property name="node.js.selected.package.eslint" value="(autodetect)" />
@@ -380,6 +382,7 @@
       <method v="2" />
     </configuration>
     <list>
+      <item itemvalue="Python.run_qa" />
       <item itemvalue="Python.resume" />
       <item itemvalue="Python.run_glue_roberta" />
       <item itemvalue="Python.run_glue_bert" />
@@ -390,7 +393,6 @@
       <item itemvalue="Python.run_glue" />
       <item itemvalue="Python.run_mlm_no_trainer" />
       <item itemvalue="Python.run_glue_sparse" />
-      <item itemvalue="Python.run_qa_sparse" />
       <item itemvalue="Python.run_summarization_sparse" />
       <item itemvalue="Python.run_qa (1)" />
     </list>
@@ -434,6 +436,11 @@
       <workItem from="1671544186730" duration="617000" />
       <workItem from="1671595177911" duration="140000" />
       <workItem from="1671958425529" duration="9869000" />
+      <workItem from="1673187097441" duration="648000" />
+      <workItem from="1678070863814" duration="605000" />
+      <workItem from="1679560636949" duration="1230000" />
+      <workItem from="1680450282394" duration="855000" />
+      <workItem from="1680604766877" duration="17000" />
     </task>
     <servers />
   </component>
