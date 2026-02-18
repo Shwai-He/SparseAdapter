@@ -21,7 +21,7 @@ SAVE=./checkpoints/${model_name_or_path}/${DATE}/${pruner}_${sparsity}_${attn_mo
 echo "${SAVE}"
 mkdir -p ${SAVE}
 
-nohup python ./run_qa.py \
+nohup python ./run_qa_sparse.py \
       --model_name_or_path ${model_name_or_path} \
       --dataset_name ${TASK_NAME} \
       --do_train --do_eval --overwrite_output_dir \

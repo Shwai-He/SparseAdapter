@@ -17,7 +17,7 @@ attn_option=sequential
 ffn_option=sequential
 sparsity=1.
 metric_for_best_model=rouge2
-SAVE=./checkpoints/${model_name_or_path}/${TASK_NAME}/${DATE}/${pruner}_${sparsity}_${attn_mode}_${attn_option}_${attn_bn}_${ffn_mode}_${ffn_option}_${ffn_bn}
+SAVE=./checkpoints/${model_name_or_path}/${dataset_name}/${DATE}/${pruner}_${sparsity}_${attn_mode}_${attn_option}_${attn_bn}_${ffn_mode}_${ffn_option}_${ffn_bn}
 echo "${SAVE}"
 mkdir -p ${SAVE}
 

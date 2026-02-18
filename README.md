@@ -1,50 +1,84 @@
-# SparseAdapter: An Easy Approach for Improving the Parameter-Efficiency of Adapters
-This is the official implementation of the [paper](https://arxiv.org/abs/2210.04284):
+# SparseAdapter
+[![Paper](https://img.shields.io/badge/arXiv-2210.04284-b31b1b.svg)](https://arxiv.org/abs/2210.04284)
+[![EMNLP Findings](https://img.shields.io/badge/EMNLP%20Findings-2022-4b8bbe.svg)](https://aclanthology.org/2022.findings-emnlp.160/)
+[![PyTorch](https://img.shields.io/badge/PyTorch-1.13.1-ee4c2c.svg)](https://pytorch.org/)
+[![Transformers](https://img.shields.io/badge/Transformers-4.17.0-ffcc4d.svg)](https://github.com/huggingface/transformers)
 
-```
-SparseAdapter: An Easy Approach for Improving the Parameter-Efficiency of Adapters
-Shwai He, Liang Ding, Daize Dong, Miao Zhang, Dacheng Tao
-EMNLP 2022 Findings. 
-```
+Official implementation of the paper:
 
-Adapter Tuning, which freezes the pretrained language models (PLMs) and only fine-tunes a few extra modules, becomes an appealing efficient alternative to the full model fine-tuning. Although computationally efficient, the recent Adapters often increase parameters (e.g. bottleneck dimension) for matching the performance of full model fine-tuning, which we argue goes against their original intention. In this work, we re-examine the parameter-efficiency of Adapters through the lens of network pruning (we name such plug-in concept as \texttt{SparseAdapter}) and find that SparseAdapter can achieve comparable or better performance than standard Adapters when the sparse ratio reaches up to 80\%. Based on our findings, we introduce an easy but effective setting ``\textit{Large-Sparse}'' to improve the model capacity of Adapters under the same parameter budget. Experiments on five competitive Adapters upon three advanced PLMs show that with proper sparse method (e.g. SNIP) and ratio (e.g. 40\%) SparseAdapter can consistently outperform their corresponding counterpart. Encouragingly, with the \textit{Large-Sparse} setting, we can obtain further appealing gains, even outperforming the full fine-tuning by a large margin.
+**SparseAdapter: An Easy Approach for Improving the Parameter-Efficiency of Adapters**  
+Shwai He, Liang Ding, Daize Dong, Miao Zhang, Dacheng Tao  
+Findings of EMNLP 2022  
+Paper: https://arxiv.org/abs/2210.04284
+
+SparseAdapter revisits adapter parameter-efficiency via pruning. Under the same budget, sparse adapters can match or outperform dense adapters, and the proposed **Large-Sparse** setting further improves model capacity and performance.
 
 <p align="center">
-  <img src="Figures/SparseAdapter.png" width="1000">  
+  <img src="Figures/SparseAdapter.png" width="1000" alt="SparseAdapter overview">
 </p>
 
-## Requirements
+## Environment
+
+- Python 3.8+
 - torch==1.13.1
 - transformers==4.17.0
 - tokenizers==0.10.1
 - nltk==3.5
 
-To install requirements, run `pip install -r requirements.txt`.
+Install dependencies:
 
-## Usage
-To fine-tune the SparseAdapter model, run: 
+```bash
+pip install -r requirements.txt
+```
 
-`examples/pytorch/text-classification/run_glue_sparse.py`, \
-`examples/pytorch/summarization/run_summarization_sparse.py`. \
-`examples/pytorch/question-answering/run_qa_sparse.py`, 
+## Quick Start
 
-You can also run the following scripts: 
+You can run SparseAdapter training from the task-specific scripts under `examples/pytorch/`.
 
-`examples/pytorch/text-classification/run_glue.sh`, \
-`examples/pytorch/summarization/run_summarization.sh`. \
-`examples/pytorch/question-answering/run_qa.sh`, 
+### 1) Text Classification (GLUE)
+
+```bash
+cd examples/pytorch/text-classification
+bash run_glue.sh
+```
+
+Main entry:
+- `examples/pytorch/text-classification/run_glue_sparse.py`
+
+### 2) Question Answering (SQuAD)
+
+```bash
+cd examples/pytorch/question-answering
+bash run_qa.sh
+```
+
+Main entry:
+- `examples/pytorch/question-answering/run_qa_sparse.py`
+
+### 3) Summarization (XSum/CNN-DM)
+
+```bash
+cd examples/pytorch/summarization
+bash run_summarization.sh
+```
+
+Main entry:
+- `examples/pytorch/summarization/run_summarization_sparse.py`
+
+## Notes
+
+- Default scripts are configured for multi-GPU usage. Adjust `device_ids` and batch size for your hardware.
+- Key sparse-related flags include `--pruner`, `--sparsity`, `--attn_bn`, and `--ffn_bn`.
+- Checkpoints and logs are written to `checkpoints/`.
 
 ## Citation
 
-```
+```bibtex
 @inproceedings{he2022sparseadapter,
-    title = "SparseAdapter: An Easy Approach for Improving the Parameter-Efficiency of Adapters",
-    author = {He, Shwai and Ding, Liang and Dong, Daize and Zhang, Miao and Tao, Dacheng},
-    booktitle = "Findings of EMNLP",
-    year = "2022",
-    url = "https://aclanthology.org/2022.findings-emnlp.160",
+  title = {SparseAdapter: An Easy Approach for Improving the Parameter-Efficiency of Adapters},
+  author = {He, Shwai and Ding, Liang and Dong, Daize and Zhang, Miao and Tao, Dacheng},
+  booktitle = {Findings of EMNLP},
+  year = {2022},
+  url = {https://aclanthology.org/2022.findings-emnlp.160}
 }
 ```
-
-
-
