@@ -1,12 +1,14 @@
-# SparseAdapter
+# SparseAdapter: An Easy Approach for Improving the Parameter-Efficiency of Adapters
 [![Paper](https://img.shields.io/badge/arXiv-2210.04284-b31b1b.svg)](https://arxiv.org/abs/2210.04284)
 [![EMNLP Findings](https://img.shields.io/badge/EMNLP%20Findings-2022-4b8bbe.svg)](https://aclanthology.org/2022.findings-emnlp.160/)
 [![PyTorch](https://img.shields.io/badge/PyTorch-1.13.1-ee4c2c.svg)](https://pytorch.org/)
 [![Transformers](https://img.shields.io/badge/Transformers-4.17.0-ffcc4d.svg)](https://github.com/huggingface/transformers)
 
-Official implementation of [**SparseAdapter: An Easy Approach for Improving the Parameter-Efficiency of Adapters**](https://arxiv.org/abs/2210.04284)  
-Shwai He, Liang Ding, Daize Dong, Miao Zhang, Dacheng Tao  
-Findings of EMNLP 2022
+[**Shwai He**](https://arxiv.org/abs/2210.04284), **Liang Ding**, **Daize Dong**, **Miao Zhang**, **Dacheng Tao**
+
+> This is the official implementation of the paper
+> [**SparseAdapter: An Easy Approach for Improving the Parameter-Efficiency of Adapters**](https://arxiv.org/abs/2210.04284),
+> published in **Findings of EMNLP 2022**.
 
 <p align="center">
   <img src="Figures/SparseAdapter.png" width="1000" alt="SparseAdapter overview">
