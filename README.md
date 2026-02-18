@@ -4,20 +4,46 @@
 [![PyTorch](https://img.shields.io/badge/PyTorch-1.13.1-ee4c2c.svg)](https://pytorch.org/)
 [![Transformers](https://img.shields.io/badge/Transformers-4.17.0-ffcc4d.svg)](https://github.com/huggingface/transformers)
 
-Official implementation of the paper:
-
-**SparseAdapter: An Easy Approach for Improving the Parameter-Efficiency of Adapters**  
+Official implementation of [**SparseAdapter: An Easy Approach for Improving the Parameter-Efficiency of Adapters**](https://arxiv.org/abs/2210.04284)  
 Shwai He, Liang Ding, Daize Dong, Miao Zhang, Dacheng Tao  
-Findings of EMNLP 2022  
-Paper: https://arxiv.org/abs/2210.04284
-
-SparseAdapter revisits adapter parameter-efficiency via pruning. Under the same budget, sparse adapters can match or outperform dense adapters, and the proposed **Large-Sparse** setting further improves model capacity and performance.
+Findings of EMNLP 2022
 
 <p align="center">
   <img src="Figures/SparseAdapter.png" width="1000" alt="SparseAdapter overview">
 </p>
 
-## Environment
+## 📰 News
+- Oct 2022: SparseAdapter accepted by **Findings of EMNLP 2022**.
+- Oct 2022: Paper and official implementation released.
+
+## ✨ Why SparseAdapter
+Adapter tuning is efficient because it freezes most PLM parameters, but strong adapter performance often requires larger adapter modules.
+SparseAdapter revisits this tradeoff with pruning:
+
+- Keep adapter-style tuning workflow.
+- Introduce sparsity into adapter parameters.
+- Improve parameter-efficiency while staying competitive with dense adapters.
+
+The paper also introduces **Large-Sparse**, which increases adapter capacity under the same parameter budget by combining larger adapters with sparsity.
+
+## 🔍 Core Setting
+SparseAdapter training in this repo is mainly controlled by:
+
+- `--pruner`: pruning strategy (e.g., `rand`, `snip`).
+- `--sparsity`: sparsity ratio.
+- `--attn_bn`, `--ffn_bn`: adapter bottleneck sizes.
+- `--attn_mode`, `--ffn_mode`: adapter insertion modes.
+
+These options are exposed in task scripts under `examples/pytorch/`.
+
+## 📦 Repository Structure
+- `src/`: modified Transformers source code and sparse trainer logic.
+- `petl/`: adapter-related modules and utilities.
+- `examples/pytorch/`: runnable scripts for GLUE, SQuAD, and summarization.
+- `Figures/`: figures used in the paper and README.
+- `utils/`: project utility scripts.
+
+## ⚙️ Installation
 
 - Python 3.8+
 - torch==1.13.1
@@ -25,16 +51,14 @@ SparseAdapter revisits adapter parameter-efficiency via pruning. Under the same 
 - tokenizers==0.10.1
 - nltk==3.5
 
-Install dependencies:
-
 ```bash
+conda create -n sparseadapter python=3.8 -y
+conda activate sparseadapter
+
 pip install -r requirements.txt
 ```
 
-## Quick Start
-
-You can run SparseAdapter training from the task-specific scripts under `examples/pytorch/`.
-
+## 🚀 Quick Start
 ### 1) Text Classification (GLUE)
 
 ```bash
@@ -42,8 +66,7 @@ cd examples/pytorch/text-classification
 bash run_glue.sh
 ```
 
-Main entry:
-- `examples/pytorch/text-classification/run_glue_sparse.py`
+Main script: `examples/pytorch/text-classification/run_glue_sparse.py`
 
 ### 2) Question Answering (SQuAD)
 
@@ -52,8 +75,7 @@ cd examples/pytorch/question-answering
 bash run_qa.sh
 ```
 
-Main entry:
-- `examples/pytorch/question-answering/run_qa_sparse.py`
+Main script: `examples/pytorch/question-answering/run_qa_sparse.py`
 
 ### 3) Summarization (XSum/CNN-DM)
 
@@ -62,16 +84,14 @@ cd examples/pytorch/summarization
 bash run_summarization.sh
 ```
 
-Main entry:
-- `examples/pytorch/summarization/run_summarization_sparse.py`
+Main script: `examples/pytorch/summarization/run_summarization_sparse.py`
 
-## Notes
+## 🧪 Repro Tips
+- Default `.sh` scripts are configured for multi-GPU runs (`device_ids="0 1 2 3 4 5 6 7"`). Adjust to your hardware.
+- Outputs are written under `checkpoints/`.
+- Start from each task script first, then tune pruning and sparsity knobs for your setup.
 
-- Default scripts are configured for multi-GPU usage. Adjust `device_ids` and batch size for your hardware.
-- Key sparse-related flags include `--pruner`, `--sparsity`, `--attn_bn`, and `--ffn_bn`.
-- Checkpoints and logs are written to `checkpoints/`.
-
-## Citation
+## 📄 Citation
 
 ```bibtex
 @inproceedings{he2022sparseadapter,
