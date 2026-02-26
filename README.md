@@ -1,9 +1,9 @@
-<h1 align="center">SparseAdapter: An Easy Approach for Improving the Parameter-Efficiency of Adapters</h1>
+<h1 align="center">[EMNLP Findings 2022] SparseAdapter: An Easy Approach for Improving the Parameter-Efficiency of Adapters</h1>
 <p align="center">
-[![Paper](https://img.shields.io/badge/arXiv-2210.04284-b31b1b.svg)](https://arxiv.org/abs/2210.04284)
-[![EMNLP Findings](https://img.shields.io/badge/EMNLP%20Findings-2022-4b8bbe.svg)](https://aclanthology.org/2022.findings-emnlp.160/)
-[![PyTorch](https://img.shields.io/badge/PyTorch-1.13.1-ee4c2c.svg)](https://pytorch.org/)
-[![Transformers](https://img.shields.io/badge/Transformers-4.17.0-ffcc4d.svg)](https://github.com/huggingface/transformers)
+  <a href="https://arxiv.org/abs/2210.04284"><img src="https://img.shields.io/badge/arXiv-2210.04284-b31b1b.svg" alt="arXiv"></a>
+  <a href="https://aclanthology.org/2022.findings-emnlp.160/"><img src="https://img.shields.io/badge/EMNLP%20Findings-2022-4b8bbe.svg" alt="EMNLP Findings 2022"></a>
+  <a href="https://pytorch.org/"><img src="https://img.shields.io/badge/PyTorch-1.13.1-ee4c2c.svg" alt="PyTorch 1.13.1"></a>
+  <a href="https://github.com/huggingface/transformers"><img src="https://img.shields.io/badge/Transformers-4.17.0-ffcc4d.svg" alt="Transformers 4.17.0"></a>
 </p>
 
 <p align="center">
