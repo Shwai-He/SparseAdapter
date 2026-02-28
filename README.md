@@ -1,4 +1,5 @@
 <h1 align="center">[EMNLP Findings 2022] SparseAdapter: An Easy Approach for Improving the Parameter-Efficiency of Adapters</h1>
+
 <p align="center">
   <a href="https://arxiv.org/abs/2210.04284"><img src="https://img.shields.io/badge/arXiv-2210.04284-b31b1b.svg" alt="arXiv"></a>
   <a href="https://aclanthology.org/2022.findings-emnlp.160/"><img src="https://img.shields.io/badge/EMNLP%20Findings-2022-4b8bbe.svg" alt="EMNLP Findings 2022"></a>
@@ -7,15 +8,17 @@
 </p>
 
 <p align="center">
+  <a href="https://shwai-he.github.io/">Shwai He</a>, Liang Ding, Daize Dong, Miao Zhang, Dacheng Tao
+</p>
+
+<p align="center">
+  <a href="#-introduction">📖 Introduction</a> •
   <a href="#-news">📰 News</a> •
   <a href="#-why-sparseadapter">✨ Why</a> •
   <a href="#-core-setting">🔍 Setting</a> •
   <a href="#-quick-start">🚀 Quick Start</a> •
-  <a href="#%EF%B8%8F-installation">⚙️ Installation</a>
-</p>
-
-<p align="center">
-  Shwai He, Liang Ding, Daize Dong, Miao Zhang, Dacheng Tao
+  <a href="#%EF%B8%8F-installation">⚙️ Installation</a> •
+  <a href="#-citation">📄 Citation</a>
 </p>
 
 ## 📖 Introduction
