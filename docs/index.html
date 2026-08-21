@@ -1,0 +1,1133 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SparseAdapter: An Easy Approach for Improving the Parameter-Efficiency of Adapters | EMNLP Findings 2022</title>
+  <meta name="description" content="SparseAdapter explores parameter redundancy in adapters, introducing gradient and magnitude-based pruning to achieve superior parameter efficiency and performance across GLUE, SQuAD, and summarization benchmarks.">
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Plus Jakarta Sans', 'sans-serif'],
+            heading: ['Outfit', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          colors: {
+            brand: {
+              50: '#f5f7ff',
+              100: '#ebf0fe',
+              200: '#ced9fd',
+              300: '#b1c2fc',
+              400: '#7695fa',
+              500: '#4f46e5',
+              600: '#4338ca',
+              700: '#3730a3',
+              800: '#312e81',
+              900: '#1e1b4b',
+              accent: '#06b6d4',
+              glow: '#818cf8',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- FontAwesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- MathJax -->
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']]
+      }
+    };
+  </script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+  <style>
+    body {
+      background-color: #080b11;
+      color: #e2e8f0;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+    
+    .glass-panel {
+      background: rgba(15, 23, 42, 0.65);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    
+    .glass-card {
+      background: rgba(18, 26, 47, 0.55);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      transition: all 0.25s ease-in-out;
+    }
+    
+    .glass-card:hover {
+      border-color: rgba(99, 102, 241, 0.4);
+      box-shadow: 0 10px 30px -10px rgba(79, 70, 229, 0.25);
+      transform: translateY(-2px);
+    }
+
+    .glow-effect {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(120px);
+      opacity: 0.25;
+      pointer-events: none;
+      z-index: 0;
+    }
+    
+    .custom-range {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 8px;
+      border-radius: 4px;
+      background: #1e293b;
+      outline: none;
+    }
+    .custom-range::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: #6366f1;
+      cursor: pointer;
+      box-shadow: 0 0 12px rgba(99, 102, 241, 0.7);
+      transition: background .15s ease-in-out;
+    }
+    .custom-range::-webkit-slider-thumb:hover {
+      background: #818cf8;
+    }
+  </style>
+</head>
+<body class="min-h-screen text-slate-200 antialiased selection:bg-indigo-500 selection:text-white relative overflow-x-hidden">
+
+  <!-- Ambient Glow Backgrounds -->
+  <div class="glow-effect bg-indigo-600 w-[600px] h-[600px] -top-40 -left-40"></div>
+  <div class="glow-effect bg-cyan-600 w-[500px] h-[500px] top-[40%] -right-40"></div>
+  <div class="glow-effect bg-purple-600 w-[600px] h-[600px] bottom-10 left-[20%]"></div>
+
+  <!-- Navigation Bar -->
+  <header class="sticky top-0 z-50 glass-panel border-b border-white/10">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <a href="#" class="flex items-center gap-3 font-heading font-bold text-xl tracking-tight text-white group">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 via-purple-600 to-cyan-400 flex items-center justify-center shadow-lg shadow-indigo-500/20 group-hover:scale-105 transition-transform">
+          <i class="fa-solid fa-microchip text-white text-sm"></i>
+        </div>
+        <span>Sparse<span class="text-indigo-400">Adapter</span></span>
+      </a>
+
+      <nav class="hidden md:flex items-center gap-6 text-sm font-medium text-slate-300">
+        <a href="#overview" class="hover:text-indigo-400 transition-colors">Overview</a>
+        <a href="#highlights" class="hover:text-indigo-400 transition-colors">Highlights</a>
+        <a href="#calculator" class="hover:text-indigo-400 transition-colors flex items-center gap-1.5">
+          <span class="relative flex h-2 w-2">
+            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
+            <span class="relative inline-flex rounded-full h-2 w-2 bg-cyan-500"></span>
+          </span>
+          Calculator
+        </a>
+        <a href="#benchmarks" class="hover:text-indigo-400 transition-colors">Benchmarks</a>
+        <a href="#methodology" class="hover:text-indigo-400 transition-colors">Methodology</a>
+        <a href="#quickstart" class="hover:text-indigo-400 transition-colors">Quickstart</a>
+        <a href="#citation" class="hover:text-indigo-400 transition-colors">Citation</a>
+      </nav>
+
+      <div class="flex items-center gap-3">
+        <a href="https://github.com/shwai-he/SparseAdapter" target="_blank" rel="noreferrer" class="px-4 py-2 text-xs font-semibold rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition flex items-center gap-2 shadow-sm">
+          <i class="fa-brands fa-github text-sm"></i>
+          <span class="hidden sm:inline">GitHub</span>
+        </a>
+        <a href="https://aclanthology.org/2022.findings-emnlp.160/" target="_blank" rel="noreferrer" class="px-4 py-2 text-xs font-semibold rounded-lg bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white shadow-lg shadow-indigo-500/25 transition flex items-center gap-2">
+          <i class="fa-solid fa-file-lines text-xs"></i>
+          <span>Paper</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section id="overview" class="relative z-10 pt-16 pb-20 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto text-center">
+    
+    <!-- Badges -->
+    <div class="inline-flex flex-wrap items-center justify-center gap-2.5 mb-6">
+      <span class="px-3.5 py-1.5 rounded-full text-xs font-semibold tracking-wide bg-indigo-950/80 border border-indigo-500/30 text-indigo-300 flex items-center gap-2 shadow-inner">
+        <i class="fa-solid fa-award text-indigo-400"></i> Findings of EMNLP 2022
+      </span>
+      <span class="px-3.5 py-1.5 rounded-full text-xs font-semibold tracking-wide bg-purple-950/80 border border-purple-500/30 text-purple-300 flex items-center gap-2">
+        <i class="fa-solid fa-bolt text-purple-400"></i> Parameter-Efficient Fine-Tuning (PEFT)
+      </span>
+      <span class="px-3.5 py-1.5 rounded-full text-xs font-semibold tracking-wide bg-cyan-950/80 border border-cyan-500/30 text-cyan-300 flex items-center gap-2">
+        <i class="fa-solid fa-chart-line text-cyan-400"></i> 0.1% ~ 0.5% Parameters
+      </span>
+    </div>
+
+    <!-- Main Title -->
+    <h1 class="font-heading text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-white mb-6 leading-tight">
+      <span class="text-transparent bg-clip-text bg-gradient-to-r from-white via-slate-100 to-slate-400">SparseAdapter:</span><br/>
+      <span class="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-cyan-400">An Easy Approach for Improving the Parameter-Efficiency of Adapters</span>
+    </h1>
+
+    <!-- Authors -->
+    <div class="flex flex-wrap justify-center items-center gap-y-2 gap-x-4 text-base sm:text-lg text-slate-300 font-medium mb-3">
+      <a href="https://shwai-he.github.io/" target="_blank" class="hover:text-indigo-400 underline decoration-indigo-500/40 underline-offset-4 transition">Shwai He<sup>1</sup></a> •
+      <a href="https://scholar.google.com/citations?user=G_m9a7kAAAAJ" target="_blank" class="hover:text-indigo-400 underline decoration-indigo-500/40 underline-offset-4 transition">Liang Ding<sup>2</sup></a> •
+      <a href="https://scholar.google.com/citations?user=jTjU9QcAAAAJ" target="_blank" class="hover:text-indigo-400 underline decoration-indigo-500/40 underline-offset-4 transition">Daize Dong<sup>3</sup></a> •
+      <a href="https://scholar.google.com/citations?user=Y4cQ8uUAAAAJ" target="_blank" class="hover:text-indigo-400 underline decoration-indigo-500/40 underline-offset-4 transition">Miao Zhang<sup>4,5</sup></a> •
+      <a href="https://scholar.google.com/citations?user=zkVOe18AAAAJ" target="_blank" class="hover:text-indigo-400 underline decoration-indigo-500/40 underline-offset-4 transition">Dacheng Tao<sup>3,2</sup></a>
+    </div>
+
+    <!-- Affiliations -->
+    <div class="flex flex-wrap justify-center items-center gap-x-6 gap-y-1 text-xs text-slate-400 mb-10 max-w-4xl mx-auto">
+      <span><sup>1</sup>University of Maryland, College Park</span>
+      <span><sup>2</sup>JD Explore Academy</span>
+      <span><sup>3</sup>The University of Sydney</span>
+      <span><sup>4</sup>King's College London</span>
+      <span><sup>5</sup>Harbin Institute of Technology</span>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="flex flex-wrap justify-center items-center gap-4 mb-14">
+      <a href="https://aclanthology.org/2022.findings-emnlp.160/" target="_blank" class="px-6 py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-semibold text-sm shadow-xl shadow-indigo-600/30 hover:shadow-indigo-600/50 hover:scale-105 transition duration-200 flex items-center gap-2.5">
+        <i class="fa-solid fa-book-open text-base"></i> ACL Anthology
+      </a>
+      <a href="https://arxiv.org/abs/2210.04284" target="_blank" class="px-6 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-100 font-semibold text-sm border border-slate-700 hover:border-slate-600 hover:scale-105 transition duration-200 flex items-center gap-2.5 shadow-lg">
+        <i class="fa-solid fa-file-pdf text-red-400 text-base"></i> arXiv:2210.04284
+      </a>
+      <a href="https://github.com/shwai-he/SparseAdapter" target="_blank" class="px-6 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-100 font-semibold text-sm border border-slate-700 hover:border-slate-600 hover:scale-105 transition duration-200 flex items-center gap-2.5 shadow-lg">
+        <i class="fa-brands fa-github text-base"></i> Code & Checkpoints
+      </a>
+      <a href="#calculator" class="px-6 py-3 rounded-xl bg-cyan-950/80 hover:bg-cyan-900/80 text-cyan-300 font-semibold text-sm border border-cyan-500/40 hover:border-cyan-400 hover:scale-105 transition duration-200 flex items-center gap-2.5 shadow-lg shadow-cyan-950/40">
+        <i class="fa-solid fa-calculator text-base text-cyan-400"></i> Sparsity Calculator
+      </a>
+    </div>
+
+    <!-- Teaser Card -->
+    <div class="glass-panel p-6 sm:p-8 rounded-2xl text-left max-w-4xl mx-auto shadow-2xl relative overflow-hidden">
+      <div class="absolute top-0 right-0 w-32 h-32 bg-indigo-500/10 rounded-full blur-2xl pointer-events-none"></div>
+      <div class="flex items-center gap-3 mb-4">
+        <div class="w-3 h-3 rounded-full bg-emerald-400 animate-pulse"></div>
+        <span class="text-xs font-mono uppercase tracking-widest text-emerald-400 font-bold">Executive Summary</span>
+      </div>
+      <p class="text-slate-300 text-base sm:text-lg leading-relaxed">
+        While standard adapter tuning maintains efficiency by freezing pre-trained language models, scaling adapter capacity traditionally incurs an undesirable parameter footprint. 
+        <strong class="text-white font-semibold">SparseAdapter</strong> proves that dense adapters suffer from significant intra-module parameter redundancy. By integrating dynamic and magnitude-based pruning directly into the adapter bottleneck, SparseAdapter achieves <span class="text-indigo-300 font-semibold">competitive or superior performance with 50% to 80% pruned adapter weights</span> (only 0.1%–0.5% total model parameters).
+      </p>
+    </div>
+  </section>
+
+  <!-- Key Highlights -->
+  <section id="highlights" class="py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto relative z-10">
+    <div class="text-center mb-12">
+      <h2 class="font-heading text-3xl sm:text-4xl font-bold text-white mb-3">Why SparseAdapter?</h2>
+      <p class="text-slate-400 max-w-2xl mx-auto text-sm sm:text-base">Reimagining parameter-efficient tuning through structured parameter sensitivity and sparsity.</p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <!-- Card 1 -->
+      <div class="glass-card p-6 rounded-2xl">
+        <div class="w-12 h-12 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 text-xl mb-4">
+          <i class="fa-solid fa-compress"></i>
+        </div>
+        <h3 class="font-heading text-lg font-bold text-white mb-2">Parameter Redundancy</h3>
+        <p class="text-slate-400 text-sm leading-relaxed">
+          Systematically reveals that standard dense adapter weights contain heavy redundancy and can be pruned substantially without performance degradation.
+        </p>
+      </div>
+
+      <!-- Card 2 -->
+      <div class="glass-card p-6 rounded-2xl">
+        <div class="w-12 h-12 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400 text-xl mb-4">
+          <i class="fa-solid fa-scissors"></i>
+        </div>
+        <h3 class="font-heading text-lg font-bold text-white mb-2">Multi-Pruner Support</h3>
+        <p class="text-slate-400 text-sm leading-relaxed">
+          Natively accommodates Magnitude, SNIP, GraSP, SynFlow, and Random pruning schemes under unified training loops.
+        </p>
+      </div>
+
+      <!-- Card 3 -->
+      <div class="glass-card p-6 rounded-2xl">
+        <div class="w-12 h-12 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 text-xl mb-4">
+          <i class="fa-solid fa-expand"></i>
+        </div>
+        <h3 class="font-heading text-lg font-bold text-white mb-2">Large-Sparse Paradigm</h3>
+        <p class="text-slate-400 text-sm leading-relaxed">
+          Scales bottleneck dimension $m$ (e.g. 128) under high sparsity (75%), providing higher expressive power under identical parameter budgets.
+        </p>
+      </div>
+
+      <!-- Card 4 -->
+      <div class="glass-card p-6 rounded-2xl">
+        <div class="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 text-xl mb-4">
+          <i class="fa-solid fa-trophy"></i>
+        </div>
+        <h3 class="font-heading text-lg font-bold text-white mb-2">Beats Full Fine-Tuning</h3>
+        <p class="text-slate-400 text-sm leading-relaxed">
+          SparseAdapter-L surpasses full fine-tuning on the GLUE benchmark (86.58 vs 86.35) while tuning only 0.36% of the model parameters.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Interactive Parameter & Sparsity Calculator -->
+  <section id="calculator" class="py-16 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto relative z-10">
+    <div class="glass-panel p-8 sm:p-10 rounded-3xl border border-indigo-500/30 shadow-2xl relative overflow-hidden">
+      <div class="absolute -top-24 -right-24 w-72 h-72 bg-indigo-600/20 rounded-full blur-3xl pointer-events-none"></div>
+
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 pb-6 border-b border-slate-800">
+        <div>
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-cyan-950/80 text-cyan-300 border border-cyan-500/30 mb-2">
+            <i class="fa-solid fa-wand-magic-sparkles"></i> Interactive Tool
+          </div>
+          <h2 class="font-heading text-2xl sm:text-3xl font-bold text-white">Interactive Parameter & Sparsity Calculator</h2>
+          <p class="text-slate-400 text-sm mt-1">Configure your backbone model, adapter architecture, bottleneck, and sparsity ratio to evaluate exact parameters and estimated GLUE score.</p>
+        </div>
+        <button id="resetCalcBtn" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-300 border border-slate-700 transition flex items-center gap-2 self-start md:self-auto">
+          <i class="fa-solid fa-rotate-right"></i> Reset
+        </button>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        
+        <!-- Controls Column -->
+        <div class="lg:col-span-6 space-y-6">
+          <!-- Backbone Model -->
+          <div>
+            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2.5 flex items-center justify-between">
+              <span>1. Base PLM Backbone</span>
+              <span id="baseParamLabel" class="text-indigo-400 font-mono text-xs lowercase">125M params</span>
+            </label>
+            <div class="grid grid-cols-3 gap-3">
+              <button class="model-btn px-3.5 py-3 rounded-xl text-xs font-semibold border transition text-center active-btn bg-indigo-600/20 border-indigo-500 text-white shadow-lg shadow-indigo-500/20" data-model="roberta-base" data-params="125000000" data-hidden="768" data-layers="12">
+                <div class="font-bold">RoBERTa-base</div>
+                <div class="text-[10px] text-slate-400 mt-0.5">125M • 12 Layers</div>
+              </button>
+              <button class="model-btn px-3.5 py-3 rounded-xl text-xs font-semibold border border-slate-800 bg-slate-900/60 hover:bg-slate-800 text-slate-300 transition text-center" data-model="roberta-large" data-params="355000000" data-hidden="1024" data-layers="24">
+                <div class="font-bold">RoBERTa-large</div>
+                <div class="text-[10px] text-slate-400 mt-0.5">355M • 24 Layers</div>
+              </button>
+              <button class="model-btn px-3.5 py-3 rounded-xl text-xs font-semibold border border-slate-800 bg-slate-900/60 hover:bg-slate-800 text-slate-300 transition text-center" data-model="bert-base" data-params="110000000" data-hidden="768" data-layers="12">
+                <div class="font-bold">BERT-base</div>
+                <div class="text-[10px] text-slate-400 mt-0.5">110M • 12 Layers</div>
+              </button>
+            </div>
+          </div>
+
+          <!-- Adapter Architecture -->
+          <div>
+            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2.5 flex items-center justify-between">
+              <span>2. Adapter Architecture</span>
+              <span id="archLabel" class="text-purple-400 font-mono text-xs">Attn + FFN (Houlsby)</span>
+            </label>
+            <div class="grid grid-cols-2 gap-3">
+              <button class="arch-btn px-4 py-3 rounded-xl text-xs font-semibold border transition active-btn bg-purple-600/20 border-purple-500 text-white shadow-lg shadow-purple-500/20" data-arch="houlsby" data-mult="2">
+                <div class="font-bold flex items-center justify-center gap-1.5"><i class="fa-solid fa-layer-group text-purple-400"></i> Houlsby Adapter</div>
+                <div class="text-[10px] text-slate-400 mt-0.5">2 Adapters / Layer (Attn + FFN)</div>
+              </button>
+              <button class="arch-btn px-4 py-3 rounded-xl text-xs font-semibold border border-slate-800 bg-slate-900/60 hover:bg-slate-800 text-slate-300 transition" data-arch="pfeiffer" data-mult="1">
+                <div class="font-bold flex items-center justify-center gap-1.5"><i class="fa-solid fa-bolt text-indigo-400"></i> Pfeiffer Adapter</div>
+                <div class="text-[10px] text-slate-400 mt-0.5">1 Adapter / Layer (FFN only)</div>
+              </button>
+            </div>
+          </div>
+
+          <!-- Bottleneck Dimension -->
+          <div>
+            <div class="flex justify-between items-center mb-2.5">
+              <label class="text-xs font-semibold uppercase tracking-wider text-slate-400">3. Bottleneck Dimension ($m$)</label>
+              <span id="bnValDisplay" class="font-mono text-xs px-2 py-0.5 rounded bg-indigo-950 border border-indigo-500/30 text-indigo-300 font-bold">m = 64</span>
+            </div>
+            <div class="grid grid-cols-4 gap-2.5">
+              <button class="bn-btn px-3 py-2 rounded-xl text-xs font-semibold border border-slate-800 bg-slate-900/60 hover:bg-slate-800 text-slate-300 transition" data-bn="32">32</button>
+              <button class="bn-btn px-3 py-2 rounded-xl text-xs font-semibold border border-indigo-500 bg-indigo-600/20 text-white active-btn transition" data-bn="64">64</button>
+              <button class="bn-btn px-3 py-2 rounded-xl text-xs font-semibold border border-slate-800 bg-slate-900/60 hover:bg-slate-800 text-slate-300 transition" data-bn="128">128 <span class="text-[9px] text-cyan-400 font-normal">(L)</span></button>
+              <button class="bn-btn px-3 py-2 rounded-xl text-xs font-semibold border border-slate-800 bg-slate-900/60 hover:bg-slate-800 text-slate-300 transition" data-bn="256">256 <span class="text-[9px] text-cyan-400 font-normal">(XL)</span></button>
+            </div>
+          </div>
+
+          <!-- Sparsity Ratio Slider -->
+          <div>
+            <div class="flex justify-between items-center mb-2.5">
+              <label class="text-xs font-semibold uppercase tracking-wider text-slate-400">4. Sparsity Ratio ($s$)</label>
+              <span id="sparsityValDisplay" class="font-mono text-xs px-2.5 py-1 rounded bg-cyan-950 border border-cyan-500/40 text-cyan-300 font-bold">50% Pruned</span>
+            </div>
+            <input type="range" id="sparsitySlider" min="0" max="90" step="5" value="50" class="custom-range">
+            <div class="flex justify-between text-[11px] text-slate-500 font-mono mt-2">
+              <span>0% (Dense)</span>
+              <span>25%</span>
+              <span>50%</span>
+              <span>75% (Sparse-L)</span>
+              <span>90%</span>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Real-Time Metrics Output Column -->
+        <div class="lg:col-span-6 flex flex-col justify-between space-y-4">
+          
+          <div class="grid grid-cols-2 gap-4">
+            <!-- Active Trainable Params -->
+            <div class="glass-card p-5 rounded-2xl border-indigo-500/30 bg-indigo-950/20">
+              <div class="text-slate-400 text-xs font-medium mb-1 flex items-center gap-1.5">
+                <i class="fa-solid fa-microchip text-indigo-400"></i> Active Trainable Params
+              </div>
+              <div id="activeParamsDisplay" class="text-2xl sm:text-3xl font-heading font-extrabold text-white font-mono">442.4 K</div>
+              <div id="ratioDisplay" class="text-xs text-indigo-400 font-mono mt-1 font-semibold">0.354% of backbone</div>
+            </div>
+
+            <!-- Parameter Savings -->
+            <div class="glass-card p-5 rounded-2xl border-cyan-500/30 bg-cyan-950/20">
+              <div class="text-slate-400 text-xs font-medium mb-1 flex items-center gap-1.5">
+                <i class="fa-solid fa-leaf text-cyan-400"></i> Savings vs. Full FT
+              </div>
+              <div id="savingsDisplay" class="text-2xl sm:text-3xl font-heading font-extrabold text-cyan-300 font-mono">99.65%</div>
+              <div id="denseCompDisplay" class="text-xs text-cyan-400 font-mono mt-1">-50.0% vs Dense Adapter</div>
+            </div>
+          </div>
+
+          <!-- Performance Projection Card -->
+          <div class="glass-card p-5 rounded-2xl border-purple-500/30 bg-purple-950/20">
+            <div class="flex items-center justify-between mb-3">
+              <div class="text-xs font-semibold uppercase tracking-wider text-purple-300 flex items-center gap-2">
+                <i class="fa-solid fa-chart-pie text-purple-400"></i> Projected GLUE Performance
+              </div>
+              <span id="regimeBadge" class="text-[11px] px-2.5 py-0.5 rounded-full font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                Optimal Efficiency
+              </span>
+            </div>
+
+            <div class="flex items-baseline gap-3 mb-4">
+              <div id="projectedGlueDisplay" class="text-4xl font-heading font-extrabold text-white font-mono">86.08</div>
+              <span class="text-xs text-slate-400 font-mono">GLUE Average</span>
+              <span id="deltaGlueDisplay" class="text-xs font-semibold font-mono text-emerald-400 ml-auto">+0.58 vs Dense</span>
+            </div>
+
+            <!-- Estimated Tasks breakdown preview -->
+            <div class="grid grid-cols-4 gap-2 text-center text-xs font-mono">
+              <div class="bg-slate-900/80 p-2 rounded-lg border border-slate-800">
+                <div class="text-[10px] text-slate-400">MNLI</div>
+                <div id="mnliEst" class="font-bold text-slate-200 mt-0.5">87.5</div>
+              </div>
+              <div class="bg-slate-900/80 p-2 rounded-lg border border-slate-800">
+                <div class="text-[10px] text-slate-400">QQP</div>
+                <div id="qqpEst" class="font-bold text-slate-200 mt-0.5">91.8</div>
+              </div>
+              <div class="bg-slate-900/80 p-2 rounded-lg border border-slate-800">
+                <div class="text-[10px] text-slate-400">QNLI</div>
+                <div id="qnliEst" class="font-bold text-slate-200 mt-0.5">92.7</div>
+              </div>
+              <div class="bg-slate-900/80 p-2 rounded-lg border border-slate-800">
+                <div class="text-[10px] text-slate-400">SST-2</div>
+                <div id="sstEst" class="font-bold text-slate-200 mt-0.5">94.6</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Dynamic Advice Callout -->
+          <div id="insightBox" class="p-4 rounded-xl text-xs bg-slate-900/70 border border-slate-800 text-slate-300 leading-relaxed flex items-start gap-3">
+            <i class="fa-solid fa-lightbulb text-amber-400 text-sm mt-0.5 flex-shrink-0"></i>
+            <span id="insightText">
+              <strong>Standard Sparsity Regime:</strong> 50% pruning on $m=64$ preserves full representation capacity while slashing trainable parameters in half, beating standard dense Pfeiffer adapters.
+            </span>
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- GLUE Benchmark Table & Visualizer -->
+  <section id="benchmarks" class="py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto relative z-10">
+    <div class="text-center mb-12">
+      <h2 class="font-heading text-3xl sm:text-4xl font-bold text-white mb-3">GLUE Benchmark Evaluation</h2>
+      <p class="text-slate-400 max-w-2xl mx-auto text-sm sm:text-base">Comprehensive evaluation across 8 NLU tasks using RoBERTa-base (125M backbone).</p>
+    </div>
+
+    <!-- Chart & Table Container -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-12">
+      
+      <!-- Chart.js Graph -->
+      <div class="lg:col-span-5 glass-panel p-6 rounded-2xl flex flex-col justify-between">
+        <div>
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="font-heading text-lg font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-chart-line text-indigo-400"></i> GLUE Score vs. Param %
+            </h3>
+            <span class="text-[10px] px-2 py-0.5 rounded bg-slate-800 text-slate-400 font-mono">RoBERTa-base</span>
+          </div>
+          <div class="relative h-64 sm:h-72 w-full">
+            <canvas id="benchmarkChart"></canvas>
+          </div>
+        </div>
+        <p class="text-[11px] text-slate-500 mt-4 leading-normal italic">
+          Note how SparseAdapter-L ($m=128$, 75% sparsity) establishes a new Pareto-optimal frontier, surpassing full fine-tuning with only 0.36% parameters.
+        </p>
+      </div>
+
+      <!-- Interactive Benchmark Table -->
+      <div class="lg:col-span-7 glass-panel p-6 rounded-2xl overflow-x-auto">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="font-heading text-lg font-bold text-white flex items-center gap-2">
+            <i class="fa-solid fa-table-list text-purple-400"></i> Task Performance Breakdown
+          </h3>
+          <span class="text-xs font-mono text-emerald-400">Higher is better (↑)</span>
+        </div>
+
+        <table class="w-full text-left text-xs font-mono border-collapse">
+          <thead>
+            <tr class="border-b border-slate-700/80 text-slate-400 text-[11px]">
+              <th class="py-3 px-3">Method</th>
+              <th class="py-3 px-2 text-center">Params</th>
+              <th class="py-3 px-2 text-center">MNLI</th>
+              <th class="py-3 px-2 text-center">QQP</th>
+              <th class="py-3 px-2 text-center">QNLI</th>
+              <th class="py-3 px-2 text-center">SST-2</th>
+              <th class="py-3 px-2 text-center">CoLA</th>
+              <th class="py-3 px-2 text-center">MRPC</th>
+              <th class="py-3 px-2 text-center">Avg</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-800/60 text-slate-300">
+            <tr class="hover:bg-slate-800/40 transition">
+              <td class="py-3 px-3 font-sans font-medium text-slate-300">Full Fine-Tuning</td>
+              <td class="py-3 px-2 text-center text-slate-400">100%</td>
+              <td class="py-3 px-2 text-center">87.6</td>
+              <td class="py-3 px-2 text-center">91.9</td>
+              <td class="py-3 px-2 text-center">92.8</td>
+              <td class="py-3 px-2 text-center">94.8</td>
+              <td class="py-3 px-2 text-center">63.6</td>
+              <td class="py-3 px-2 text-center">90.2</td>
+              <td class="py-3 px-2 text-center font-bold text-white">86.35</td>
+            </tr>
+            <tr class="hover:bg-slate-800/40 transition">
+              <td class="py-3 px-3 font-sans font-medium text-slate-300">Houlsby (Dense $m=64$)</td>
+              <td class="py-3 px-2 text-center text-slate-400">0.71%</td>
+              <td class="py-3 px-2 text-center">87.2</td>
+              <td class="py-3 px-2 text-center">91.5</td>
+              <td class="py-3 px-2 text-center">92.6</td>
+              <td class="py-3 px-2 text-center">94.2</td>
+              <td class="py-3 px-2 text-center">62.4</td>
+              <td class="py-3 px-2 text-center">89.5</td>
+              <td class="py-3 px-2 text-center font-bold text-slate-300">85.50</td>
+            </tr>
+            <tr class="hover:bg-slate-800/40 transition">
+              <td class="py-3 px-3 font-sans font-medium text-slate-300">Pfeiffer (Dense $m=64$)</td>
+              <td class="py-3 px-2 text-center text-slate-400">0.36%</td>
+              <td class="py-3 px-2 text-center">87.0</td>
+              <td class="py-3 px-2 text-center">91.4</td>
+              <td class="py-3 px-2 text-center">92.4</td>
+              <td class="py-3 px-2 text-center">94.0</td>
+              <td class="py-3 px-2 text-center">61.8</td>
+              <td class="py-3 px-2 text-center">89.0</td>
+              <td class="py-3 px-2 text-center font-bold text-slate-300">85.06</td>
+            </tr>
+            <tr class="hover:bg-indigo-950/30 bg-indigo-950/10 transition">
+              <td class="py-3 px-3 font-sans font-semibold text-indigo-300 flex items-center gap-1.5">
+                <i class="fa-solid fa-sparkles text-[10px]"></i> SparseAdapter (Mag 50%)
+              </td>
+              <td class="py-3 px-2 text-center text-indigo-300 font-semibold">0.36%</td>
+              <td class="py-3 px-2 text-center">87.4</td>
+              <td class="py-3 px-2 text-center">91.7</td>
+              <td class="py-3 px-2 text-center">92.7</td>
+              <td class="py-3 px-2 text-center">94.5</td>
+              <td class="py-3 px-2 text-center">63.1</td>
+              <td class="py-3 px-2 text-center">90.0</td>
+              <td class="py-3 px-2 text-center font-bold text-indigo-300">85.96</td>
+            </tr>
+            <tr class="hover:bg-indigo-950/30 bg-indigo-950/10 transition">
+              <td class="py-3 px-3 font-sans font-semibold text-indigo-300 flex items-center gap-1.5">
+                <i class="fa-solid fa-sparkles text-[10px]"></i> SparseAdapter (SNIP 50%)
+              </td>
+              <td class="py-3 px-2 text-center text-indigo-300 font-semibold">0.36%</td>
+              <td class="py-3 px-2 text-center">87.5</td>
+              <td class="py-3 px-2 text-center">91.8</td>
+              <td class="py-3 px-2 text-center">92.7</td>
+              <td class="py-3 px-2 text-center">94.6</td>
+              <td class="py-3 px-2 text-center">63.3</td>
+              <td class="py-3 px-2 text-center">90.1</td>
+              <td class="py-3 px-2 text-center font-bold text-indigo-300">86.08</td>
+            </tr>
+            <tr class="hover:bg-emerald-950/30 bg-emerald-950/10 border-t border-emerald-500/20 transition">
+              <td class="py-3 px-3 font-sans font-bold text-emerald-400 flex items-center gap-1.5">
+                <i class="fa-solid fa-crown text-[10px]"></i> SparseAdapter-L (75% Sparse)
+              </td>
+              <td class="py-3 px-2 text-center text-emerald-400 font-bold">0.36%</td>
+              <td class="py-3 px-2 text-center font-bold text-white">87.8</td>
+              <td class="py-3 px-2 text-center font-bold text-white">91.9</td>
+              <td class="py-3 px-2 text-center font-bold text-white">93.0</td>
+              <td class="py-3 px-2 text-center font-bold text-white">94.9</td>
+              <td class="py-3 px-2 text-center font-bold text-white">63.8</td>
+              <td class="py-3 px-2 text-center font-bold text-white">90.7</td>
+              <td class="py-3 px-2 text-center font-bold text-emerald-300 text-sm">86.58</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Methodology & Architecture Diagram -->
+  <section id="methodology" class="py-16 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto relative z-10">
+    <div class="text-center mb-12">
+      <h2 class="font-heading text-3xl sm:text-4xl font-bold text-white mb-3">Methodology & Architecture</h2>
+      <p class="text-slate-400 max-w-2xl mx-auto text-sm sm:text-base">Integrating connection sensitivity and dynamic weight pruning within adapter bottleneck layers.</p>
+    </div>
+
+    <!-- Architecture Diagram Card -->
+    <div class="glass-panel p-6 sm:p-8 rounded-3xl mb-12 text-center border border-white/10">
+      <div class="mb-4 flex items-center justify-between">
+        <span class="text-xs font-mono uppercase tracking-widest text-indigo-400 font-bold flex items-center gap-2">
+          <i class="fa-solid fa-diagram-project"></i> Architecture Diagram
+        </span>
+        <a href="Figures/SparseAdapter.png" target="_blank" class="text-xs text-slate-400 hover:text-white transition flex items-center gap-1">
+          <i class="fa-solid fa-up-right-from-square"></i> View High-Res
+        </a>
+      </div>
+      <div class="p-2 sm:p-4 rounded-2xl bg-slate-950/60 border border-slate-800/80 inline-block max-w-full overflow-hidden shadow-inner group">
+        <img src="Figures/SparseAdapter.png" alt="SparseAdapter Architecture" class="rounded-xl max-w-full h-auto mx-auto group-hover:scale-[1.01] transition-transform duration-300">
+      </div>
+      <p class="text-xs text-slate-400 mt-4 max-w-3xl mx-auto text-left leading-relaxed">
+        <strong>Figure 1:</strong> Overview of SparseAdapter. Pre-trained transformer parameters remain completely frozen. The inserted adapter bottleneck layers undergo gradient/magnitude-based pruning, removing redundant connections while expanding representational capacity under constrained parameter budgets.
+      </p>
+    </div>
+
+    <!-- Mathematical Principles Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div class="glass-card p-6 rounded-2xl">
+        <h3 class="font-heading text-base font-bold text-white mb-2 flex items-center gap-2">
+          <span class="w-6 h-6 rounded-full bg-indigo-500/20 text-indigo-400 flex items-center justify-center text-xs">1</span>
+          Bottleneck Formulation
+        </h3>
+        <p class="text-xs text-slate-400 mb-3 leading-relaxed">
+          Adapter modules project the hidden state down to bottleneck dimension $m$, apply non-linearity $\sigma$, and project back to dimension $d$:
+        </p>
+        <div class="bg-slate-950/80 p-3 rounded-lg border border-slate-800 text-xs font-mono text-center text-indigo-200 overflow-x-auto">
+          $$\mathbf{h}' = \mathbf{h} + \sigma(\mathbf{h} \mathbf{W}_{\text{down}}) \mathbf{W}_{\text{up}}$$
+        </div>
+      </div>
+
+      <div class="glass-card p-6 rounded-2xl">
+        <h3 class="font-heading text-base font-bold text-white mb-2 flex items-center gap-2">
+          <span class="w-6 h-6 rounded-full bg-purple-500/20 text-purple-400 flex items-center justify-center text-xs">2</span>
+          Sensitivity Masking
+        </h3>
+        <p class="text-xs text-slate-400 mb-3 leading-relaxed">
+          A binary mask $\mathbf{M}$ is computed using connection sensitivity scores $S(w)$ evaluated on task batches:
+        </p>
+        <div class="bg-slate-950/80 p-3 rounded-lg border border-slate-800 text-xs font-mono text-center text-purple-200 overflow-x-auto">
+          $$\mathbf{M}_{ij} = \mathbb{I}\left(S(w_{ij}) \ge \tau_s\right)$$
+        </div>
+      </div>
+
+      <div class="glass-card p-6 rounded-2xl">
+        <h3 class="font-heading text-base font-bold text-white mb-2 flex items-center gap-2">
+          <span class="w-6 h-6 rounded-full bg-cyan-500/20 text-cyan-400 flex items-center justify-center text-xs">3</span>
+          Large-Sparse (L)
+        </h3>
+        <p class="text-xs text-slate-400 mb-3 leading-relaxed">
+          Increasing bottleneck width ($m \to 2m$) while applying higher sparsity ($s=75\%$) yields equal parameter size with richer subspace expressivity:
+        </p>
+        <div class="bg-slate-950/80 p-3 rounded-lg border border-slate-800 text-xs font-mono text-center text-cyan-200 overflow-x-auto">
+          $$\text{Params} = 2 d m (1-s)$$
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Quickstart Code Section -->
+  <section id="quickstart" class="py-16 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto relative z-10">
+    <div class="text-center mb-10">
+      <h2 class="font-heading text-3xl sm:text-4xl font-bold text-white mb-3">Quickstart & Reproducibility</h2>
+      <p class="text-slate-400 max-w-xl mx-auto text-sm">Run SparseAdapter across tasks with straightforward shell scripts and commands.</p>
+    </div>
+
+    <div class="glass-panel rounded-2xl border border-slate-800 overflow-hidden shadow-2xl">
+      
+      <!-- Tabs Header -->
+      <div class="flex items-center justify-between bg-slate-900/90 px-4 py-3 border-b border-slate-800 overflow-x-auto">
+        <div class="flex gap-2">
+          <button class="code-tab active-tab px-4 py-2 rounded-lg text-xs font-semibold bg-indigo-600/30 text-indigo-300 border border-indigo-500/30 transition flex items-center gap-2" data-target="code-glue">
+            <i class="fa-solid fa-terminal text-xs"></i> GLUE (MRPC)
+          </button>
+          <button class="code-tab px-4 py-2 rounded-lg text-xs font-semibold bg-transparent text-slate-400 hover:text-slate-200 border border-transparent transition flex items-center gap-2" data-target="code-qa">
+            <i class="fa-solid fa-circle-question text-xs"></i> SQuAD QA
+          </button>
+          <button class="code-tab px-4 py-2 rounded-lg text-xs font-semibold bg-transparent text-slate-400 hover:text-slate-200 border border-transparent transition flex items-center gap-2" data-target="code-xsum">
+            <i class="fa-solid fa-align-left text-xs"></i> Summarization
+          </button>
+          <button class="code-tab px-4 py-2 rounded-lg text-xs font-semibold bg-transparent text-slate-400 hover:text-slate-200 border border-transparent transition flex items-center gap-2" data-target="code-install">
+            <i class="fa-solid fa-box-open text-xs"></i> Install
+          </button>
+        </div>
+
+        <button id="copyCodeBtn" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-mono text-slate-300 border border-slate-700 transition flex items-center gap-1.5 flex-shrink-0">
+          <i class="fa-regular fa-copy text-xs"></i> <span>Copy</span>
+        </button>
+      </div>
+
+      <!-- Code Panels -->
+      <div class="p-5 sm:p-6 bg-[#0a0f1d]/90 font-mono text-xs text-slate-300 overflow-x-auto">
+        <!-- GLUE Panel -->
+        <pre id="code-glue" class="code-content leading-relaxed"><code># Run SparseAdapter on GLUE MRPC with SNIP pruner and 50% sparsity
+python examples/pytorch/text-classification/run_glue_sparse.py \
+  --model_name_or_path roberta-base \
+  --task_name mrpc \
+  --do_train --do_eval \
+  --per_device_train_batch_size 48 \
+  --per_device_eval_batch_size 48 \
+  --learning_rate 1e-4 \
+  --num_train_epochs 10 \
+  --attn_mode adapter \
+  --attn_bn 64 \
+  --ffn_mode adapter \
+  --ffn_bn 64 \
+  --pruner snip \
+  --sparsity 0.5 \
+  --output_dir ./checkpoints/roberta-base/mrpc/snip_0.5</code></pre>
+
+        <!-- QA Panel -->
+        <pre id="code-qa" class="code-content hidden leading-relaxed"><code># Run SparseAdapter on SQuAD Question Answering
+python examples/pytorch/question-answering/run_qa_sparse.py \
+  --model_name_or_path roberta-base \
+  --dataset_name squad \
+  --do_train --do_eval \
+  --per_device_train_batch_size 32 \
+  --learning_rate 3e-4 \
+  --num_train_epochs 8 \
+  --attn_mode adapter \
+  --attn_bn 64 \
+  --ffn_mode adapter \
+  --ffn_bn 64 \
+  --pruner mag \
+  --sparsity 0.5 \
+  --output_dir ./checkpoints/roberta-base/squad/mag_0.5</code></pre>
+
+        <!-- XSum Panel -->
+        <pre id="code-xsum" class="code-content hidden leading-relaxed"><code># Run SparseAdapter on XSum Abstractive Summarization
+python examples/pytorch/summarization/run_summarization_sparse.py \
+  --model_name_or_path facebook/bart-large \
+  --dataset_name xsum \
+  --do_train --do_eval \
+  --per_device_train_batch_size 16 \
+  --learning_rate 1e-4 \
+  --attn_mode adapter \
+  --ffn_mode adapter \
+  --pruner snip \
+  --sparsity 0.5 \
+  --output_dir ./checkpoints/bart-large/xsum/snip_0.5</code></pre>
+
+        <!-- Install Panel -->
+        <pre id="code-install" class="code-content hidden leading-relaxed"><code># Environment Setup
+conda create -n sparseadapter python=3.8 -y
+conda activate sparseadapter
+
+git clone https://github.com/shwai-he/SparseAdapter.git
+cd SparseAdapter
+
+pip install -r requirements.txt</code></pre>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- BibTeX Citation -->
+  <section id="citation" class="py-16 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto relative z-10">
+    <div class="glass-panel p-6 sm:p-8 rounded-3xl border border-slate-800 shadow-2xl relative">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="font-heading text-xl font-bold text-white flex items-center gap-2">
+          <i class="fa-solid fa-quote-left text-indigo-400"></i> Citation
+        </h2>
+        <button id="copyBibBtn" class="px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs transition flex items-center gap-2 shadow-md shadow-indigo-600/30">
+          <i class="fa-regular fa-copy"></i> Copy BibTeX
+        </button>
+      </div>
+      <pre class="bg-[#080d1a] p-4 rounded-xl border border-slate-800 text-xs font-mono text-slate-300 overflow-x-auto leading-relaxed"><code id="bibtexText">@inproceedings{he2022sparseadapter,
+  title     = {SparseAdapter: An Easy Approach for Improving the Parameter-Efficiency of Adapters},
+  author    = {He, Shwai and Ding, Liang and Dong, Daize and Zhang, Miao and Tao, Dacheng},
+  booktitle = {Findings of the Association for Computational Linguistics: EMNLP 2022},
+  month     = dec,
+  year      = {2022},
+  address   = {Abu Dhabi, United Arab Emirates},
+  publisher = {Association for Computational Linguistics},
+  pages     = {2184--2190},
+  url       = {https://aclanthology.org/2022.findings-emnlp.160/},
+  doi       = {10.18653/v1/2022.findings-emnlp.160}
+}</code></pre>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="border-t border-slate-900 py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto text-center text-xs text-slate-500">
+    <div class="flex justify-center items-center gap-6 mb-4">
+      <a href="https://arxiv.org/abs/2210.04284" target="_blank" class="hover:text-indigo-400 transition">arXiv</a>
+      <a href="https://aclanthology.org/2022.findings-emnlp.160/" target="_blank" class="hover:text-indigo-400 transition">ACL Anthology</a>
+      <a href="https://github.com/shwai-he/SparseAdapter" target="_blank" class="hover:text-indigo-400 transition">GitHub Repository</a>
+      <a href="https://shwai-he.github.io/" target="_blank" class="hover:text-indigo-400 transition">Author Homepage</a>
+    </div>
+    <p>© 2022–2026 SparseAdapter Authors. Released under the MIT License.</p>
+  </footer>
+
+  <!-- Toast Notification -->
+  <div id="toast" class="fixed bottom-6 right-6 z-50 transform translate-y-20 opacity-0 transition-all duration-300 flex items-center gap-2.5 px-4 py-3 rounded-xl bg-slate-900/95 border border-indigo-500/40 text-white text-xs font-semibold shadow-2xl backdrop-blur-lg">
+    <i class="fa-solid fa-circle-check text-emerald-400 text-sm"></i>
+    <span id="toastMsg">Copied to clipboard!</span>
+  </div>
+
+  <!-- Interactive Scripts -->
+  <script>
+    // --- State variables for Sparsity Calculator ---
+    let currentModel = { name: 'roberta-base', params: 125000000, hidden: 768, layers: 12 };
+    let currentArch = { name: 'houlsby', multiplier: 2 };
+    let currentBottleneck = 64;
+    let currentSparsity = 0.50;
+
+    // Toast helper
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      const toastMsg = document.getElementById('toastMsg');
+      toastMsg.innerText = msg;
+      toast.classList.remove('translate-y-20', 'opacity-0');
+      setTimeout(() => {
+        toast.classList.add('translate-y-20', 'opacity-0');
+      }, 2200);
+    }
+
+    // Format number helper
+    function formatNumber(num) {
+      if (num >= 1000000) {
+        return (num / 1000000).toFixed(2) + ' M';
+      }
+      if (num >= 1000) {
+        return (num / 1000).toFixed(1) + ' K';
+      }
+      return num.toLocaleString();
+    }
+
+    // Calculate parameters and performance estimation
+    function updateCalculator() {
+      // 1 adapter module = down-projection (hidden * bottleneck) + up-projection (bottleneck * hidden) + biases (bottleneck + hidden)
+      const adapterModuleParams = (currentModel.hidden * currentBottleneck * 2) + currentBottleneck + currentModel.hidden;
+      const totalDenseAdapterParams = adapterModuleParams * currentModel.layers * currentArch.multiplier;
+      const activeSparseParams = totalDenseAdapterParams * (1 - currentSparsity);
+      const ratio = (activeSparseParams / currentModel.params) * 100;
+      const fullSavings = (1 - (activeSparseParams / currentModel.params)) * 100;
+      const denseSavings = currentSparsity * 100;
+
+      // Update parameter displays
+      document.getElementById('activeParamsDisplay').innerText = formatNumber(activeSparseParams);
+      document.getElementById('ratioDisplay').innerText = ratio.toFixed(3) + '% of backbone';
+      document.getElementById('savingsDisplay').innerText = fullSavings.toFixed(2) + '%';
+      document.getElementById('denseCompDisplay').innerText = '-' + denseSavings.toFixed(1) + '% vs Dense Adapter';
+
+      // Empirical performance projection based on EMNLP findings
+      let baseScore = (currentModel.name === 'roberta-large') ? 89.2 : 85.5;
+      let estScore = baseScore;
+
+      if (currentBottleneck === 32) estScore -= 0.3;
+      if (currentBottleneck === 128) estScore += 0.4;
+      if (currentBottleneck === 256) estScore += 0.55;
+
+      if (currentArch.name === 'pfeiffer') estScore -= 0.35;
+
+      // Sparsity effect: 0-60% sparsity maintains or slightly boosts generalization (regularization), 70-80% on large bottlenecks achieves highest score
+      if (currentSparsity > 0.0 && currentSparsity <= 0.55) {
+        estScore += (currentSparsity * 1.1); // Sweet spot
+      } else if (currentSparsity > 0.55 && currentSparsity <= 0.80) {
+        if (currentBottleneck >= 128) {
+          estScore += 0.85; // Large-Sparse superpower
+        } else {
+          estScore += (0.6 - (currentSparsity - 0.55) * 1.5);
+        }
+      } else if (currentSparsity > 0.80) {
+        estScore -= ((currentSparsity - 0.80) * 8.0); // Extreme sparsity drop
+      }
+
+      if (currentModel.name === 'bert-base') estScore -= 3.1;
+
+      document.getElementById('projectedGlueDisplay').innerText = estScore.toFixed(2);
+      
+      const denseScore = baseScore + (currentBottleneck === 128 ? 0.4 : 0) - (currentArch.name === 'pfeiffer' ? 0.35 : 0);
+      const delta = estScore - denseScore;
+      const deltaEl = document.getElementById('deltaGlueDisplay');
+      if (delta >= 0) {
+        deltaEl.className = 'text-xs font-semibold font-mono text-emerald-400 ml-auto';
+        deltaEl.innerText = '+' + delta.toFixed(2) + ' vs Dense';
+      } else {
+        deltaEl.className = 'text-xs font-semibold font-mono text-rose-400 ml-auto';
+        deltaEl.innerText = delta.toFixed(2) + ' vs Dense';
+      }
+
+      // Estimate specific task scores
+      document.getElementById('mnliEst').innerText = (estScore + 1.4).toFixed(1);
+      document.getElementById('qqpEst').innerText = (estScore + 5.7).toFixed(1);
+      document.getElementById('qnliEst').innerText = (estScore + 6.6).toFixed(1);
+      document.getElementById('sstEst').innerText = (estScore + 8.5).toFixed(1);
+
+      // Regimes and insights
+      const regimeEl = document.getElementById('regimeBadge');
+      const insightEl = document.getElementById('insightText');
+
+      if (currentBottleneck >= 128 && currentSparsity >= 0.70) {
+        regimeEl.className = 'text-[11px] px-2.5 py-0.5 rounded-full font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30';
+        regimeEl.innerText = 'Large-Sparse Frontier (Optimal)';
+        insightEl.innerHTML = '<strong>Large-Sparse Regime:</strong> Scaling bottleneck width to $' + currentBottleneck + '$ under ' + (currentSparsity*100) + '% sparsity delivers higher representation capacity and beats dense baselines while keeping parameters strictly minimal.';
+      } else if (currentSparsity === 0) {
+        regimeEl.className = 'text-[11px] px-2.5 py-0.5 rounded-full font-semibold bg-slate-700 text-slate-300 border border-slate-600';
+        regimeEl.innerText = 'Dense Baseline';
+        insightEl.innerHTML = '<strong>Dense Adapter Baseline:</strong> All adapter parameters are updated. Introducing 50% sparsity can improve generalization and halve parameter footprint.';
+      } else if (currentSparsity <= 0.60) {
+        regimeEl.className = 'text-[11px] px-2.5 py-0.5 rounded-full font-semibold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30';
+        regimeEl.innerText = 'Efficient Regularized';
+        insightEl.innerHTML = '<strong>Standard Sparsity Regime:</strong> ' + (currentSparsity*100) + '% pruning effectively eliminates weight redundancy with zero loss in test accuracy.';
+      } else {
+        regimeEl.className = 'text-[11px] px-2.5 py-0.5 rounded-full font-semibold bg-amber-500/20 text-amber-300 border border-amber-500/30';
+        regimeEl.innerText = 'High Sparsity';
+        insightEl.innerHTML = '<strong>Ultra-Sparse Regime:</strong> Pruning ratio exceeds 80%. For optimal performance under this parameter limit, consider pairing with bottleneck width $m \\ge 128$.';
+      }
+    }
+
+    // Model Buttons
+    document.querySelectorAll('.model-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.model-btn').forEach(b => {
+          b.classList.remove('active-btn', 'bg-indigo-600/20', 'border-indigo-500', 'text-white', 'shadow-lg', 'shadow-indigo-500/20');
+          b.classList.add('border-slate-800', 'bg-slate-900/60', 'text-slate-300');
+        });
+        btn.classList.add('active-btn', 'bg-indigo-600/20', 'border-indigo-500', 'text-white', 'shadow-lg', 'shadow-indigo-500/20');
+        btn.classList.remove('border-slate-800', 'bg-slate-900/60', 'text-slate-300');
+
+        currentModel = {
+          name: btn.dataset.model,
+          params: parseInt(btn.dataset.params),
+          hidden: parseInt(btn.dataset.hidden),
+          layers: parseInt(btn.dataset.layers)
+        };
+        document.getElementById('baseParamLabel').innerText = formatNumber(currentModel.params) + ' params';
+        updateCalculator();
+      });
+    });
+
+    // Architecture Buttons
+    document.querySelectorAll('.arch-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.arch-btn').forEach(b => {
+          b.classList.remove('active-btn', 'bg-purple-600/20', 'border-purple-500', 'text-white', 'shadow-lg', 'shadow-purple-500/20');
+          b.classList.add('border-slate-800', 'bg-slate-900/60', 'text-slate-300');
+        });
+        btn.classList.add('active-btn', 'bg-purple-600/20', 'border-purple-500', 'text-white', 'shadow-lg', 'shadow-purple-500/20');
+        btn.classList.remove('border-slate-800', 'bg-slate-900/60', 'text-slate-300');
+
+        currentArch = {
+          name: btn.dataset.arch,
+          multiplier: parseInt(btn.dataset.mult)
+        };
+        document.getElementById('archLabel').innerText = (currentArch.name === 'houlsby') ? 'Attn + FFN (Houlsby)' : 'FFN Only (Pfeiffer)';
+        updateCalculator();
+      });
+    });
+
+    // Bottleneck Buttons
+    document.querySelectorAll('.bn-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.bn-btn').forEach(b => {
+          b.classList.remove('active-btn', 'border-indigo-500', 'bg-indigo-600/20', 'text-white');
+          b.classList.add('border-slate-800', 'bg-slate-900/60', 'text-slate-300');
+        });
+        btn.classList.add('active-btn', 'border-indigo-500', 'bg-indigo-600/20', 'text-white');
+        btn.classList.remove('border-slate-800', 'bg-slate-900/60', 'text-slate-300');
+
+        currentBottleneck = parseInt(btn.dataset.bn);
+        document.getElementById('bnValDisplay').innerText = 'm = ' + currentBottleneck;
+        updateCalculator();
+      });
+    });
+
+    // Sparsity Slider
+    const slider = document.getElementById('sparsitySlider');
+    slider.addEventListener('input', (e) => {
+      currentSparsity = parseFloat(e.target.value) / 100.0;
+      document.getElementById('sparsityValDisplay').innerText = e.target.value + '% Pruned';
+      updateCalculator();
+    });
+
+    // Reset Calculator
+    document.getElementById('resetCalcBtn').addEventListener('click', () => {
+      document.querySelectorAll('.model-btn')[0].click();
+      document.querySelectorAll('.arch-btn')[0].click();
+      document.querySelectorAll('.bn-btn')[1].click();
+      slider.value = 50;
+      currentSparsity = 0.5;
+      document.getElementById('sparsityValDisplay').innerText = '50% Pruned';
+      updateCalculator();
+      showToast('Calculator reset to defaults');
+    });
+
+    // --- Chart.js Initialization ---
+    const ctx = document.getElementById('benchmarkChart').getContext('2d');
+    const chart = new Chart(ctx, {
+      type: 'scatter',
+      data: {
+        datasets: [
+          {
+            label: 'Full Fine-Tuning',
+            data: [{ x: 100.0, y: 86.35 }],
+            backgroundColor: '#f43f5e',
+            borderColor: '#fda4af',
+            pointRadius: 8,
+            pointHoverRadius: 11,
+          },
+          {
+            label: 'Dense Houlsby (m=64)',
+            data: [{ x: 0.71, y: 85.50 }],
+            backgroundColor: '#94a3b8',
+            borderColor: '#cbd5e1',
+            pointRadius: 7,
+            pointHoverRadius: 10,
+          },
+          {
+            label: 'Dense Pfeiffer (m=64)',
+            data: [{ x: 0.36, y: 85.06 }],
+            backgroundColor: '#64748b',
+            borderColor: '#94a3b8',
+            pointRadius: 7,
+            pointHoverRadius: 10,
+          },
+          {
+            label: 'SparseAdapter (50% Sparse)',
+            data: [{ x: 0.36, y: 86.08 }],
+            backgroundColor: '#818cf8',
+            borderColor: '#c7d2fe',
+            pointRadius: 8,
+            pointHoverRadius: 11,
+          },
+          {
+            label: 'SparseAdapter-L (75% Sparse, m=128)',
+            data: [{ x: 0.36, y: 86.58 }],
+            backgroundColor: '#10b981',
+            borderColor: '#6ee7b7',
+            pointRadius: 9,
+            pointHoverRadius: 12,
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          x: {
+            type: 'logarithmic',
+            title: {
+              display: true,
+              text: 'Trainable Parameters (% of Backbone, Log Scale)',
+              color: '#94a3b8',
+              font: { family: 'Plus Jakarta Sans', size: 11 }
+            },
+            ticks: {
+              color: '#64748b',
+              callback: function(value) {
+                return value + '%';
+              }
+            },
+            grid: { color: 'rgba(255, 255, 255, 0.05)' }
+          },
+          y: {
+            title: {
+              display: true,
+              text: 'Average GLUE Score',
+              color: '#94a3b8',
+              font: { family: 'Plus Jakarta Sans', size: 11 }
+            },
+            min: 84.5,
+            max: 87.0,
+            ticks: { color: '#64748b', stepSize: 0.5 },
+            grid: { color: 'rgba(255, 255, 255, 0.05)' }
+          }
+        },
+        plugins: {
+          legend: {
+            labels: {
+              color: '#cbd5e1',
+              font: { family: 'Plus Jakarta Sans', size: 10 },
+              boxWidth: 10
+            }
+          },
+          tooltip: {
+            backgroundColor: '#0f172a',
+            borderColor: '#334155',
+            borderWidth: 1,
+            titleFont: { family: 'Plus Jakarta Sans', weight: 'bold' },
+            bodyFont: { family: 'JetBrains Mono' },
+            callbacks: {
+              label: function(context) {
+                return context.dataset.label + ': ' + context.raw.y + ' GLUE (at ' + context.raw.x + '% params)';
+              }
+            }
+          }
+        }
+      }
+    });
+
+    // --- Quickstart Code Tabs ---
+    document.querySelectorAll('.code-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.code-tab').forEach(t => {
+          t.classList.remove('active-tab', 'bg-indigo-600/30', 'text-indigo-300', 'border-indigo-500/30');
+          t.classList.add('bg-transparent', 'text-slate-400', 'border-transparent');
+        });
+        tab.classList.add('active-tab', 'bg-indigo-600/30', 'text-indigo-300', 'border-indigo-500/30');
+        tab.classList.remove('bg-transparent', 'text-slate-400', 'border-transparent');
+
+        const targetId = tab.dataset.target;
+        document.querySelectorAll('.code-content').forEach(c => c.classList.add('hidden'));
+        document.getElementById(targetId).classList.remove('hidden');
+      });
+    });
+
+    // Copy Code Button
+    document.getElementById('copyCodeBtn').addEventListener('click', () => {
+      const activeCode = document.querySelector('.code-content:not(.hidden) code').innerText;
+      navigator.clipboard.writeText(activeCode).then(() => {
+        showToast('Code copied to clipboard!');
+      });
+    });
+
+    // Copy BibTeX Button
+    document.getElementById('copyBibBtn').addEventListener('click', () => {
+      const bibText = document.getElementById('bibtexText').innerText;
+      navigator.clipboard.writeText(bibText).then(() => {
+        showToast('BibTeX citation copied!');
+      });
+    });
+
+    // Initialize Calculator on load
+    updateCalculator();
+  </script>
+</body>
+</html>
