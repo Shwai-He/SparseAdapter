@@ -157,7 +157,7 @@
       </nav>
 
       <div class="flex items-center gap-3">
-        <a href="https://github.com/shwai-he/SparseAdapter" target="_blank" rel="noreferrer" class="px-4 py-2 text-xs font-semibold rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition flex items-center gap-2 shadow-sm">
+        <a href="https://github.com/shwai-he/SparseAdapter" target="_blank" rel="noreferrer" class="px-4 py-2 text-xs font-semibold rounded-lg bg-white hover:bg-slate-100 text-slate-700 font-semibold border border-slate-300 shadow-sm border border-slate-700 transition flex items-center gap-2 shadow-sm">
           <i class="fa-brands fa-github text-sm"></i>
           <span class="hidden sm:inline">GitHub</span>
         </a>
@@ -326,11 +326,11 @@
                 <div class="font-bold">RoBERTa-base</div>
                 <div class="text-xs text-slate-600 mt-0.5">125M • 12 Layers</div>
               </button>
-              <button class="model-btn px-3.5 py-3 rounded-xl text-xs font-semibold border border-slate-800 bg-slate-900/60 hover:bg-slate-800 text-slate-300 transition text-center" data-model="roberta-large" data-params="355000000" data-hidden="1024" data-layers="24">
+              <button class="model-btn px-3.5 py-3 rounded-xl text-xs font-semibold border border-slate-800 bg-white hover:bg-slate-50 text-slate-700 border-slate-300 transition text-center" data-model="roberta-large" data-params="355000000" data-hidden="1024" data-layers="24">
                 <div class="font-bold">RoBERTa-large</div>
                 <div class="text-xs text-slate-600 mt-0.5">355M • 24 Layers</div>
               </button>
-              <button class="model-btn px-3.5 py-3 rounded-xl text-xs font-semibold border border-slate-800 bg-slate-900/60 hover:bg-slate-800 text-slate-300 transition text-center" data-model="bert-base" data-params="110000000" data-hidden="768" data-layers="12">
+              <button class="model-btn px-3.5 py-3 rounded-xl text-xs font-semibold border border-slate-800 bg-white hover:bg-slate-50 text-slate-700 border-slate-300 transition text-center" data-model="bert-base" data-params="110000000" data-hidden="768" data-layers="12">
                 <div class="font-bold">BERT-base</div>
                 <div class="text-xs text-slate-600 mt-0.5">110M • 12 Layers</div>
               </button>
@@ -348,7 +348,7 @@
                 <div class="font-bold flex items-center justify-center gap-1.5"><i class="fa-solid fa-layer-group text-purple-400"></i> Houlsby Adapter</div>
                 <div class="text-xs text-slate-600 mt-0.5">2 Adapters / Layer (Attn + FFN)</div>
               </button>
-              <button class="arch-btn px-4 py-3 rounded-xl text-xs font-semibold border border-slate-800 bg-slate-900/60 hover:bg-slate-800 text-slate-300 transition" data-arch="pfeiffer" data-mult="1">
+              <button class="arch-btn px-4 py-3 rounded-xl text-xs font-semibold border border-slate-800 bg-white hover:bg-slate-50 text-slate-700 border-slate-300 transition" data-arch="pfeiffer" data-mult="1">
                 <div class="font-bold flex items-center justify-center gap-1.5"><i class="fa-solid fa-bolt text-indigo-400"></i> Pfeiffer Adapter</div>
                 <div class="text-xs text-slate-600 mt-0.5">1 Adapter / Layer (FFN only)</div>
               </button>
@@ -362,10 +362,10 @@
               <span id="bnValDisplay" class="font-mono text-xs px-2 py-0.5 rounded bg-indigo-950 border border-indigo-500/30 text-indigo-300 font-bold">m = 64</span>
             </div>
             <div class="grid grid-cols-4 gap-2.5">
-              <button class="bn-btn px-3 py-2 rounded-xl text-xs font-semibold border border-slate-800 bg-slate-900/60 hover:bg-slate-800 text-slate-300 transition" data-bn="32">32</button>
+              <button class="bn-btn px-3 py-2 rounded-xl text-xs font-semibold border border-slate-800 bg-white hover:bg-slate-50 text-slate-700 border-slate-300 transition" data-bn="32">32</button>
               <button class="bn-btn px-3 py-2 rounded-xl text-xs font-semibold border border-indigo-500 bg-indigo-600/20 text-white active-btn transition" data-bn="64">64</button>
-              <button class="bn-btn px-3 py-2 rounded-xl text-xs font-semibold border border-slate-800 bg-slate-900/60 hover:bg-slate-800 text-slate-300 transition" data-bn="128">128 <span class="text-xs text-cyan-400 font-normal">(L)</span></button>
-              <button class="bn-btn px-3 py-2 rounded-xl text-xs font-semibold border border-slate-800 bg-slate-900/60 hover:bg-slate-800 text-slate-300 transition" data-bn="256">256 <span class="text-xs text-cyan-400 font-normal">(XL)</span></button>
+              <button class="bn-btn px-3 py-2 rounded-xl text-xs font-semibold border border-slate-800 bg-white hover:bg-slate-50 text-slate-700 border-slate-300 transition" data-bn="128">128 <span class="text-xs text-cyan-400 font-normal">(L)</span></button>
+              <button class="bn-btn px-3 py-2 rounded-xl text-xs font-semibold border border-slate-800 bg-white hover:bg-slate-50 text-slate-700 border-slate-300 transition" data-bn="256">256 <span class="text-xs text-cyan-400 font-normal">(XL)</span></button>
             </div>
           </div>
 
@@ -693,7 +693,7 @@
       </div>
 
       <!-- Code Panels -->
-      <div class="p-5 sm:p-6 bg-[#0a0f1d]/90 font-mono text-xs text-slate-300 overflow-x-auto">
+      <div class="p-5 sm:p-6 bg-[#0a0f1d]/90 font-mono text-xs text-slate-800 overflow-x-auto">
         <!-- GLUE Panel -->
         <pre id="code-glue" class="code-content leading-relaxed"><code># Run SparseAdapter on GLUE MRPC with SNIP pruner and 50% sparsity
 python examples/pytorch/text-classification/run_glue_sparse.py \
@@ -768,7 +768,7 @@ pip install -r requirements.txt</code></pre>
           <i class="fa-regular fa-copy"></i> Copy BibTeX
         </button>
       </div>
-      <pre class="bg-[#080d1a] p-4 rounded-xl border border-slate-800 text-xs font-mono text-slate-300 overflow-x-auto leading-relaxed"><code id="bibtexText">@inproceedings{he2022sparseadapter,
+      <pre class="bg-[#080d1a] p-4 rounded-xl border border-slate-800 text-xs font-mono text-slate-800 overflow-x-auto leading-relaxed"><code id="bibtexText">@inproceedings{he2022sparseadapter,
   title     = {SparseAdapter: An Easy Approach for Improving the Parameter-Efficiency of Adapters},
   author    = {He, Shwai and Ding, Liang and Dong, Daize and Zhang, Miao and Tao, Dacheng},
   booktitle = {Findings of the Association for Computational Linguistics: EMNLP 2022},
